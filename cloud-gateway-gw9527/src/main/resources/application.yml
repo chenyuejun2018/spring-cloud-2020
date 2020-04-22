@@ -1,0 +1,70 @@
+server:
+  port: 9527
+
+spring:
+  application:
+    name: cloud-gateway
+  cloud:
+    gateway:
+      # 解决跨域问题 允许来自https://docs.spring.io的get请求进行访问,并且表明服务器允许请求头中携带字段Content-Type。
+#      globalcors:
+#        corsConfigurations:
+#           '[/**]':
+#              allowedOrigins: "https://docs.spring.io"
+#              allowedMethods:
+#                - GET
+#              allowHeaders:
+#                - Content-Type
+      discovery:
+        locator:
+          #开启从注册中心动态创建路由功能，利用微服务名进行路由；
+          #表明Gateway开启服务注册和发现的功能，并且Spring Cloud Gateway
+          #自动根据服务发现为每一个服务创建了一个router，
+          #这个router将以服务名开头的请求路径转发到对应的服务
+          enabled: true
+          #是将请求路径上的服务名配置为小写（因为服务注册的时候，向注册中心注册时将服务名转成大写的了
+          lower-case-service-id: false
+      routes: # 路由
+        # 配置多个，ID唯一即可
+        # 访问地址：http://localhost:9527/payment/get/106
+        - id: payment_routh0
+          #uri: http://localhost:8008
+          uri: lb://CLOUD-PAYMENT-SERVICE
+          predicates:
+            - Path=/payment/get/**
+        - id: payment_routh1              #路由ID，没有固定规则，但是要唯一
+          #uri: http://localhost:8008      #匹配后提供服务的路由地址
+          uri: lb://CLOUD-PAYMENT-SERVICE
+          predicates: # 断言
+            - Path=/consumer/paymentOk/** #断言，路径相匹配进行路由
+            # - After=                     #在指定的时间之后，配置的地址生效
+            # - Before=                    #在指定的时间之前，配置的地址生效
+            # - Between=  ,                #在指定的时间之间，配置的地址生效
+            # - Header=X-Request-Id, \d+   #通过header进行匹配，K-V两个参数一个属性名称一个正则表达式
+            # - Host=**.baidu.com          #主机匹配
+            # - Method=GET                 #通过POST、GET、PUT、DELTE等不同的方式进行路由
+            # - Cookie=cookieName,regular  #K-V 两个参数，一个cookie名称，一个是正则表达式
+            # - Query=username, \d+        #K-V 两个参数，一个名称，一个正则表达式（值）
+          filters:  # 过滤器
+            # - StripPrefix=1
+
+eureka:
+  instance:
+    hostname: cloud-gateway-service
+    instance-id: cloud-gateway9527 #管理界面显示服务ID
+    prefer-ip-address: true  #管理界面点服务ID显示IP地址
+    # Eureka 向服务端发送心跳的时间间隔，单位秒，默认为30
+    lease-renewal-interval-in-seconds: 60
+    # Eureka 服务端在接收到最后一次心跳包后等待的时间上限，单位秒，默认90，超时剔除服务
+    lease-expiration-duration-in-seconds: 120
+  client:
+    # 表示是否将自己注册进Eureka 默认 true
+    register-with-eureka: true
+    # 是否从EurekaServer抓取已有的注册信息，默认true 单节点无所谓，
+    # 集群必须设置为true才能配合ribbon使用负载均衡。
+    fetch-registry: true
+    service-url:
+      #defaultZone: http://localhost:7001/eureka  # 单机版配置
+      defaultZone: http://eureka7001.com:7001/eureka,http://eureka7002.com:7002/eureka
+
+

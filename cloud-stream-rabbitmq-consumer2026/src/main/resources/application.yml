@@ -1,0 +1,53 @@
+server:
+  port: 2026
+
+# eureka注册中心
+eureka:
+  instance:
+    hostname: cloud-stream-rabbitmq-client
+    instance-id: cloud-stream-rabbitmq-client2026 #管理界面显示服务ID
+    prefer-ip-address: true  #管理界面点服务ID显示IP地址
+    # Eureka 向服务端发送心跳的时间间隔，单位秒，默认为30
+    lease-renewal-interval-in-seconds: 60
+    # Eureka 服务端在接收到最后一次心跳包后等待的时间上限，单位秒，默认90，超时剔除服务
+    lease-expiration-duration-in-seconds: 120
+  client:
+    # 表示是否将自己注册进Eureka 默认 true
+    register-with-eureka: true
+    # 是否从EurekaServer抓取已有的注册信息，默认true 单节点无所谓，
+    # 集群必须设置为true才能配合ribbon使用负载均衡。
+    fetch-registry: true
+    service-url:
+      #defaultZone: http://localhost:7001/eureka  # 单机版配置
+      defaultZone: http://eureka7001.com:7001/eureka,http://eureka7002.com:7002/eureka
+
+spring:
+  application:
+    name: cloud-stream-rabbitmq-client
+  cloud:
+    stream:
+      bindings: #服务的整合处理
+        input:  # 该名称是一个通道的名称 private MessageChannel input;
+          destination: minestreamExchange #表示要使用的Exchange名称定义
+          content-type: application/json  #设置消息类型json 文本为 text/plain
+          binder: defaultRabbit
+          # 每个消费者默认分成不同的组。消费者支持消息持久化
+          #在现实的业务场景中，每一个微服务应用为了实现高可用和负载均衡，都会集群部署，
+          #按照上面我们启动了两个应用的实例，消息被重复消费了两次。为解决这个问题，
+          #Spring Cloud Stream 中提供了消费组，通过配置
+          #spring.cloud.stream.bindings.input.group 属性为应用指定一个组名
+          #通过消费组的设置，虽然能保证同一消息只被一个消费者进行接收和处理
+          #指定该应用实例属于 stream 消费组，同一个组的多个消费者是竞争关系
+          # 能够保证消息会被同组的其中一个消费者消费，不同组是可以重复消费的
+          # group: groupOne2026
+          group: groupXXXX
+      binders:  # 此处配置要绑定的rabbitmq的服务信息
+        defaultRabbit: #表示定义的名称，用于binding整合
+          type: rabbit #消息组件类型
+          environment: #设置rabbitmq的相关的环境配置
+            spring:
+              rabbitmq:  # RabbitMQ配置 管理WEB端是15672，这里访问端5672
+                  host: localhost
+                  port: 5672
+                  username: guest
+                  password: guest

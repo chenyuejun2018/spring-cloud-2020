@@ -1,0 +1,55 @@
+server:
+  port: 2020
+
+# eureka注册中心
+eureka:
+  instance:
+    hostname: cloud-config-center
+    instance-id: cloud-config-center2020 #管理界面显示服务ID
+    prefer-ip-address: true  #管理界面点服务ID显示IP地址
+    # Eureka 向服务端发送心跳的时间间隔，单位秒，默认为30
+    lease-renewal-interval-in-seconds: 60
+    # Eureka 服务端在接收到最后一次心跳包后等待的时间上限，单位秒，默认90，超时剔除服务
+    lease-expiration-duration-in-seconds: 120
+  client:
+    # 表示是否将自己注册进Eureka 默认 true
+    register-with-eureka: true
+    # 是否从EurekaServer抓取已有的注册信息，默认true 单节点无所谓，
+    # 集群必须设置为true才能配合ribbon使用负载均衡。
+    fetch-registry: true
+    service-url:
+      #defaultZone: http://localhost:7001/eureka  # 单机版配置
+      defaultZone: http://eureka7001.com:7001/eureka,http://eureka7002.com:7002/eureka
+
+spring:
+  application:
+    name: cloud-config-center
+  cloud:
+    config:
+      server:
+        git:
+          # 仓库地址
+          # uri: git@github.com:chenyuejun2018/MySpringCloudConfig.git
+          uri: https://github.com/chenyuejun2018/MySpringCloudConfig.git
+          # 仓库文件夹名称，多个以逗号分隔
+          search-paths:
+             - MySpringCloudConfig
+          # git 仓库用户名（公开库可以不用填写）
+          username: chenyuejun2018
+          # git 仓库密码（公开库可以不用填写）
+          password: password
+      #对应 {label} 部分，即 Git 的分支
+      label: master
+  # RabbitMQ配置 管理WEB端是15672，这里访问端5672
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+# RabbitMQ相关配置，暴露BUS刷新配置的端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "bus-refresh"
